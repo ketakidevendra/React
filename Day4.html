@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>First React App</title>
+  <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script src='https://unpkg.com/babel-standalone@6/babel.min.js'></script>
+</head>
+<body>
+  <div id='app'></div>
+  <script type="text/babel">
+  window.API = {
+    fetchPopularUrls(lang)
+    {
+      const encodedUri = encodeURI('https://api.github.com/search/repositories?q=stars:1+language:{lang}}')
+      return fetch(encodedUri).then((data) => data.json())
+      .then((repos) => {
+        return repos.items
+      })
+      .catch((error)=>
+      {
+        console.warn(error);
+        return null;
+      })
+    }
+
+  }
+
+  function Navigation(props)
+  {
+    const languages = ["All",'Python','Javascript','Ruby']
+    return (
+      <nav>
+      <ul>
+      {
+       languages.map((lang)=> (
+            <li key = {lang} onClick={()=>props.renderNavigation(lang)}> {lang} </li>
+        )
+      )
+      }
+      </ul>
+      </nav>
+
+     )
+
+  }
+
+function RepoGrid(props)
+{
+  console.log(props.repos);
+  return(
+    <ul style={{display:'flex',flexwrap:'wrap'}}>
+    {props.repos.map(({name,html_url})=>(
+      <li key = {name} style={{margin:30}}>{name}
+      <ul>
+      <li key = {html_url}>
+      <a href={html_url}> Link </a>
+      </li>
+      </ul>
+      </li>
+    ))
+    }
+
+    </ul>
+  )
+
+}
+
+  </script>
+  <script type='text/babel'>
+  class Loading extends React.Component
+  {
+    constructor(props)
+    {
+      super(props);
+      this.state = {
+         text: 'loading'
+      }
+    }
+    componentDidMount()
+    {
+      const stopper = this.state.text + '...'
+      this.myInterval = window.setInterval(
+        ()=>{
+          this.state.text === stopper
+          ? this.setState(()=>{return {text: 'loading'}})
+          :this.setState((currentState)=>
+            {
+              return {text: currentState.text +'.'}
+            }
+      )},300)
+    }
+      componentWillUnmount()
+      {
+        window.clearInterval(this.myInterval);
+      }
+
+      render()
+      {
+        return(<p> {this.state.text}</p>)
+      }
+
+  }
+  </script>
+  <script type="text/babel">
+      class App extends React.Component {
+      constructor(props) {
+        super(props)
+        this.state = {
+          selectedlanguage : 'All',
+          loading: true,
+          repos: []
+        }
+        this.handleRenderNavigation = this.handleRenderNavigation.bind(this);
+        this.fetchRepos = this.fetchRepos.bind(this);
+      }
+
+      fetchRepos(selectedlang)
+      {
+            this.setState(
+              {
+                loading:true
+              }
+            )
+             window.API.fetchPopularUrls(selectedlang)
+             .then((repos)=>
+             {
+               this.setState(
+                 {
+                   loading: false,
+                   repos
+                 }
+               )
+             })
+      }
+      handleRenderNavigation(lang)
+      {
+
+        this.setState({
+          selectedlanguage: lang
+        })
+
+      }
+      componentDidMount()
+      {
+            console.log("===Mounted===");
+            this.fetchRepos(this.state.selectedlanguage)
+      }
+
+      componentWillUpdate(prevProps,prevState)
+      {
+        console.log("===Will Update===");
+      }
+
+      componentDidUpdate(prevProps,prevState)
+      {
+        console.log("===Already Updated===");
+        if(prevState.selectedlanguage !== this.state.selectedlanguage)
+        {
+           this.fetchRepos(this.state.selectedlanguage)
+        }
+
+      }
+
+      componentWillUnmount()
+      {
+        console.log("===About to Unmounted===");
+      }
+
+
+      render() {
+        console.log("==Render==")
+          if(this.state.loading)
+          {
+            return (<Loading/>)
+          }
+          else {
+            return(
+            <div>
+            <Navigation renderNavigation = {this.handleRenderNavigation}/>
+            <h3>Selected language: {this.state.selectedlanguage}</h3>
+                        <RepoGrid repos = {this.state.repos} />
+            </div>
+          )
+          }
+
+        }
+    }
+    ReactDOM.render(
+      <App />,
+      document.getElementById('app')
+    )
+  </script>
+
+
+
+</body>
+</html>

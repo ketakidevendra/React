@@ -36,6 +36,41 @@
   }
   </script>
   <script type='text/babel'>
+  class Loading extends React.Component
+  {
+    constructor(props)
+    {
+      super(props);
+      this.state = {
+         text: 'loading'
+      }
+    }
+    componentDidMount()
+    {
+      const stopper = this.state.text + '...'
+      this.myInterval = window.setInterval(
+        ()=>{
+          this.state.text === stopper
+          ? this.setState(()=>{return {text: 'loading'}})
+          :this.setState((currentState)=>
+            {
+              return {text: currentState.text +'.'}
+            }
+      )},300)
+    }
+componentWillUnmount()
+{
+  window.clearInterval(this.myInterval);
+}
+
+      render()
+      {
+        return(<p> {this.state.text}</p>)
+      }
+
+  }
+  </script>
+  <script type='text/babel'>
     function ActiveFriends (props) {
       return (
         <div>
@@ -73,6 +108,7 @@
         this.state = {
           friends:[],
           input: '',
+          loading: false
         }
         this.handleRemoveFriend = this.handleRemoveFriend.bind(this)
         this.updateInput = this.updateInput.bind(this)
@@ -83,13 +119,21 @@
       componentDidMount()
       {
             console.log("===Mounted===");
+            this.setState(()=>{
+              return(
+                {
+                  loading: true
+                })
+
+            })
             API.fetchFriends().then((friends)=>
             {
               console.log("Firends: " + friends);
               this.setState(()=>{
                 return(
                   {
-                    friends:friends
+                    friends:friends,
+                    loading: false
                   })
 
               }
@@ -144,6 +188,11 @@
         })
       }
       render() {
+        console.log("==Render==")
+        if(this.state.loading)
+        return(
+          <Loading />
+        )
         return (
           <div>
             <input
@@ -178,5 +227,8 @@
       document.getElementById('app')
     )
   </script>
+
+
+
 </body>
 </html>
